@@ -41,7 +41,7 @@ def execute_action(action_id, action_type, player_uuid):
 
 
 # Game Engine
-def display_state_and_actions(state, originId):
+def display_state_and_actions_and_messages(state, originId):
 
     if originId != state["id"]:
         print """
@@ -53,25 +53,45 @@ def display_state_and_actions(state, originId):
         """
 
     actions = state["actions"]
-    available_actions = filter(lambda x: x["available"] == True, actions)
-    disabled_actions = filter(lambda x: x["available"] == False, actions)
+    messages = state["messages"]
 
-    for available_action in available_actions:
-        print str(available_action["id"]) + " - " + available_action["title"]
+    #on indexe les actions possibles en local
+    number_actions = len(actions)
+    number_messages = len(messages)
+
+    i = 1
+
+    for action in actions:
+        print str(i) + " - " + action["title"]
+        i = i+1
+    for message in messages:
+        print str(i) + " - " + "SMS : " + message["title"]
+        i=i+1
 
     print """
         ------
     """
 
-    action_choosen_id = int(raw_input("Votre choix : "))
-    action_choosen_feedback = [x for x in available_actions if x["id"] == action_choosen_id][0]["feedback"]
-
-    print action_choosen_feedback
-
-    print """
-        ------
-    """
-    return action_choosen_id, "action"
+#    action_choosen_id = int(raw_input("Votre choix : "))
+#    action_choosen_feedback = [x for x in actions if x["id"] == action_choosen_id][0]["feedback"]
+    action_choosen_number = int(raw_input("Votre choix : "))
+    #traitement des choix "action" et "message"
+    if action_choosen_number < number_actions + 1 :
+        action_choosen_feedback = actions[action_choosen_number - 1]["feedback"]
+        action_choosen_id = actions[action_choosen_number - 1]["id"]
+        print action_choosen_feedback
+        print """
+            ------
+        """
+        return action_choosen_id, "action"
+    else:
+        message_choosen_feedback = "Vous envoyez un message"
+        message_choosen_id = messages[action_choosen_number - number_actions - 1]["id"]
+        print message_choosen_feedback
+        print """
+            ------
+        """
+        return message_choosen_id, "message"
 
 
 # Main story introduction
@@ -103,6 +123,7 @@ for char in available_chars:
     print str(char["id"]) + " - " + str(char["name"])
 
 choosen_char_id = int(raw_input("Numéro du joueur : "))
+#choosen_char_id = 1
 
 choosen_chars = [x for x in available_chars if x["id"] == choosen_char_id]
 other_chars = [x for x in available_chars if x["id"] != choosen_char_id]
@@ -115,7 +136,9 @@ else:
     sys.exit("Bug in the matrix")
 
 # Get the other user email
-invited_email = raw_input("Qui sera votre " + other_char_name + "? (email):")
+#invited_email = raw_input("Qui sera votre " + other_char_name + "? (email): ")
+invited_email = other_char_name+"@omts.fr"
+print "Qui sera votre " + other_char_name + "? (email): " + invited_email
 
 # Create a game session
 session_data = create_session(choosen_char_id, invited_email)
@@ -124,7 +147,12 @@ player_uuid = player["uuid"]
 lastOriginId = 0
 
 while 1:
-    selected_action_id, selected_type = display_state_and_actions(player["state"], lastOriginId)
+    selected_action_id, selected_type = display_state_and_actions_and_messages(player["state"], lastOriginId)
     lastOriginId = player["state"]["id"]
     session_updated = execute_action(selected_action_id, selected_type, player_uuid)
     player = player_from_session(session_updated, choosen_char_id)
+    #si pas d'actions possibles, GAME OVER
+    #if not (player["state"]["actions"] and player["state"]["messages"]): #en python, liste vide est false
+    #    break
+
+#print "GAME OVER"
