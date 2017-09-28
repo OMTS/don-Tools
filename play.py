@@ -41,14 +41,16 @@ def execute_action(action_id, action_type, player_uuid):
 
 
 # Game Engine
-def display_state_and_actions(state):
-    print """
-        ------
-    """
-    print state["description"]
-    print """
-        ------
-    """
+def display_state_and_actions(state, originId):
+
+    if originId != state["id"]:
+        print """
+            ------
+        """
+        print state["description"]
+        print """
+            ------
+        """
 
     actions = state["actions"]
     available_actions = filter(lambda x: x["available"] == True, actions)
@@ -119,9 +121,10 @@ invited_email = raw_input("Qui sera votre " + other_char_name + "? (email):")
 session_data = create_session(choosen_char_id, invited_email)
 player = player_from_session(session_data,choosen_char_id)
 player_uuid = player["uuid"]
+lastOriginId = 0
 
 while 1:
-    selected_action_id, selected_type = display_state_and_actions(player["state"])
+    selected_action_id, selected_type = display_state_and_actions(player["state"], lastOriginId)
+    lastOriginId = player["state"]["id"]
     session_updated = execute_action(selected_action_id, selected_type, player_uuid)
     player = player_from_session(session_updated, choosen_char_id)
-    display_state_and_actions(player["state"])
