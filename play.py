@@ -13,10 +13,8 @@ def get_histories():
         print r.text
         sys.exit("GET /histories response not parsed")
 
-
 def player_from_session(session, char_id):
     return [p for p in session["players"] if p["character"]["id"] == choosen_char_id][0]
-
 
 def create_session(characterId, invited_email):
     params = {"characterId": int(characterId), "invite": str(invited_email)}
