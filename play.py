@@ -1,6 +1,49 @@
 # -*- coding: utf-8 -*-
 import requests
 import sys
+from threading import Thread
+
+class style:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   ITALIC = '\x1B[3m'
+   END = '\033[0m'
+
+class RefreshManager(Thread):
+
+    """Thread chargé de mettre à jour la session et d'update l'UI"""
+
+    def __init__(self, session_id):
+        Thread.__init__(self)
+        self.session_id = session_id
+
+    def refresh_session(self):
+        execute_url = "https://don-production.herokuapp.com/api/sessions/"+str(self.session_id)
+        #r = requests.get(url = execute_url)
+
+        #if r.status_code == 200:
+        #    return r.json()
+        #else:
+        #    print r.text
+        #    sys.exit("POST /sessions response not parsed")
+
+
+    def run(self):
+        i = 0
+        while 1:
+            #sys.stdout.write(self.lettre)
+            sys.stdout.flush()
+            self.refresh_session()
+            #attente = 0.2
+            #attente += random.randint(1, 60) / 100
+            #time.sleep(attente)
 
 
 # REST functions
@@ -56,6 +99,18 @@ def execute_action(action_id, action_type, player_uuid):
         sys.exit("POST /sessions response not parsed")
 
 
+#def refresh_session(session_id):
+#    execute_url = "https://don-production.herokuapp.com/api/sessons/"+str(session_id)
+#    r = requests.get(url = execute_url)
+
+#    if r.status_code == 200:
+#        return r.json()
+#    else:
+#        print r.text
+#        sys.exit("POST /sessions response not parsed")
+
+
+
 # Game Engine
 def display_state_and_actions_and_messages(state, originId):
 
@@ -63,8 +118,8 @@ def display_state_and_actions_and_messages(state, originId):
         print """
             ------
         """
-        print state["title"]
-        print state["description"]
+        print style.BOLD + style.PURPLE + style.UNDERLINE + state["title"] + style.END
+        print style.ITALIC + state["description"] + style.END
         print """
             ------
         """
@@ -79,10 +134,10 @@ def display_state_and_actions_and_messages(state, originId):
     i = 1
 
     for action in actions:
-        print str(i) + " - " + action["title"] #+ " - id : " + str(action["id"])
+        print style.BOLD + str(i) + " - " + action["title"] + style.END #+ " - id : " + str(action["id"])
         i = i+1
     for message in messages:
-        print str(i) + " - " + "SMS : " + message["title"] #+ " - id : " + str(message["id"])
+        print style.BOLD + str(i) + " - " + "SMS : " + message["title"] + style.END #+ " - id : " + str(message["id"])
         i=i+1
 
     print """
@@ -105,7 +160,7 @@ def display_state_and_actions_and_messages(state, originId):
         message_choosen_feedback = "Vous envoyez un message"
         message_choosen_content = messages[action_choosen_number - number_actions - 1]["content"]
         message_choosen_id = messages[action_choosen_number - number_actions - 1]["id"]
-        print message_choosen_feedback + ":" + message_choosen_content
+        print message_choosen_feedback + " : " + message_choosen_content
         print """
             ------
         """
@@ -113,7 +168,7 @@ def display_state_and_actions_and_messages(state, originId):
 
 
 # Main story introduction
-print """
+print style.ITALIC + """
     --------
     Le 11 février 2044. L'armistice de la 4ème guerre mondiale vient d'être signée.
     Les dirigeants des 6 pays de la H-belt ont finalement conclu un pacte avec le Japon et les Etats-Unis.
@@ -130,7 +185,7 @@ print """
     Marc est ancien militaire et travaille aujourd'hui comme agent de terrain de la H-belt.
     Kate et Marc sont mariés et vivent en banlieue de Lyon, capitale française depuis la 3ème bombe H.
 
-    """
+    """ + style.END
 
 if len(sys.argv) < 3: #first player
     #get histories
@@ -140,7 +195,7 @@ if len(sys.argv) < 3: #first player
     history_id = histories_data["id"]
 
     #Input user char choice
-    print "---- Quel joueur êtes vous ? "
+    print style.DARKCYAN + "---- Quel joueur êtes vous ? " + style.END
 
     for char in available_chars:
         print str(char["id"]) + " - " + str(char["name"])
@@ -153,7 +208,7 @@ if len(sys.argv) < 3: #first player
 
     other_char_name = ""
     if len(other_chars) > 0 and  len(choosen_chars) > 0:
-        print "---- Vous êtes " + str(choosen_chars[0]["name"])
+        print style.DARKCYAN + "---- Vous êtes " + str(choosen_chars[0]["name"]) + style.END
         other_char_name = str(other_chars[0]["name"])
     else:
         sys.exit("Bug in the matrix")
@@ -170,8 +225,9 @@ if len(sys.argv) < 3: #first player
     other_player_uuid = other_player["uuid"]
 
     #prompt the command line for the other to play
-    print "---- L'autre joueur joura " + other_char_name
-    print ">>>>>> Démarrez l'autre joueur avec python play.py " + str(other_player_uuid) + " " + str(session_id) + " <<<<<<"
+    print style.DARKCYAN + "---- L'autre joueur joura " + other_char_name + style.END
+    print ""
+    print style.BOLD + ">>>>>> Démarrez l'autre joueur avec python play.py " + str(other_player_uuid) + " " + str(session_id) + " <<<<<<" + style.END
 
 
 elif len(sys.argv) == 3: #second player
@@ -182,12 +238,18 @@ elif len(sys.argv) == 3: #second player
     #get playing player
     player = player_from_session_with_uuid(session_data,sys.argv[1])
     player_uuid = player["uuid"]
+    print "---- Vous êtes " + str(player["character"]["name"])
+
 
 else:
     print "whaaaaaat?"
 
 
 lastOriginId = 0
+
+current_state = player["state"]
+#refresh_manager = RefreshManager(session_id)
+#refresh_manager.start()
 
 while 1:
     selected_action_id, selected_type = display_state_and_actions_and_messages(player["state"], lastOriginId)
@@ -197,9 +259,9 @@ while 1:
 
     if (player["state"]["won"]):
         print player["state"]["description"]
-        print "YOU WIN !!"
+        print style.BOLD + style.PURPLE + style.UNDERLINE + "YOU WIN !!" + style.END
         break
     if (player["state"]["gameOver"]):
         print player["state"]["description"]
-        print "You LOSE !!"
+        print style.BOLD + style.RED + style.UNDERLINE + "You LOSE !!" + style.END
         break
