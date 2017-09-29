@@ -13,11 +13,18 @@ def get_histories():
         print r.text
         sys.exit("GET /histories response not parsed")
 
-def player_from_session(session, char_id):
+def player_from_session_with_char_id(session, char_id):
     return [p for p in session["players"] if p["character"]["id"] == choosen_char_id][0]
 
-def create_session(characterId, invited_email):
-    params = {"characterId": int(characterId), "invite": str(invited_email)}
+def other_player_from_session_with_char_id(session, char_id):
+    return [p for p in session["players"] if p["character"]["id"] != choosen_char_id][0]
+
+def player_from_session_with_uuid(session, uuid):
+    return [p for p in session["players"] if p["uuid"] == uuid][0]
+
+
+def create_session(characterId, history_id):
+    params = {"characterId": int(characterId), "historyId": int(history_id)}
     session_url = "https://don-production.herokuapp.com/api/sessions"
     r = requests.post(url = session_url, json = params)
     if r.status_code == 200:
@@ -25,6 +32,17 @@ def create_session(characterId, invited_email):
     else:
         print r.text
         sys.exit("POST /sessions response not parsed")
+
+def join_session(uuid, session_id):
+    params = {"uuid": str(uuid)}
+    join_session_url = "https://don-production.herokuapp.com/api/sessions/"+str(session_id)+"/join"
+
+    r = requests.post(url = join_session_url, json = params)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        print r.text
+        sys.exit("POST /sessions/uuid/join response not parsed")
 
 def execute_action(action_id, action_type, player_uuid):
     params = {"type": str(action_type), "id": int(action_id)}
@@ -114,46 +132,69 @@ print """
 
     """
 
-histories_data = get_histories()
-available_chars = histories_data["characters"]
+if len(sys.argv) < 3: #first player
+    #get histories
+    #available chars and history_id
+    histories_data = get_histories()
+    available_chars = histories_data["characters"]
+    history_id = histories_data["id"]
 
-print "Quel joueur êtes vous ? "
+    #Input user char choice
+    print "---- Quel joueur êtes vous ? "
 
-for char in available_chars:
-    print str(char["id"]) + " - " + str(char["name"])
+    for char in available_chars:
+        print str(char["id"]) + " - " + str(char["name"])
 
-choosen_char_id = int(raw_input("Numéro du joueur : "))
-#choosen_char_id = 1
+    choosen_char_id = int(raw_input("---- Numéro du joueur selectionné : "))
+    #choosen_char_id = 1
 
-choosen_chars = [x for x in available_chars if x["id"] == choosen_char_id]
-other_chars = [x for x in available_chars if x["id"] != choosen_char_id]
+    choosen_chars = [x for x in available_chars if x["id"] == choosen_char_id]
+    other_chars = [x for x in available_chars if x["id"] != choosen_char_id]
 
-other_char_name = ""
-if len(other_chars) > 0 and  len(choosen_chars) > 0:
-    print "Vous êtes : " + str(choosen_chars[0]["name"])
-    other_char_name = str(other_chars[0]["name"])
+    other_char_name = ""
+    if len(other_chars) > 0 and  len(choosen_chars) > 0:
+        print "---- Vous êtes " + str(choosen_chars[0]["name"])
+        other_char_name = str(other_chars[0]["name"])
+    else:
+        sys.exit("Bug in the matrix")
+
+    # Create a game session
+    session_data = create_session(choosen_char_id, history_id)
+    session_id = session_data["id"]
+
+    #get both player
+    player = player_from_session_with_char_id(session_data,choosen_char_id)
+    other_player = other_player_from_session_with_char_id(session_data, choosen_char_id)
+
+    player_uuid = player["uuid"]
+    other_player_uuid = other_player["uuid"]
+
+    #prompt the command line for the other to play
+    print "---- L'autre joueur joura " + other_char_name
+    print ">>>>>> Démarrez l'autre joueur avec python play.py " + str(other_player_uuid) + " " + str(session_id) + " <<<<<<"
+
+
+elif len(sys.argv) == 3: #second player
+    # Create a game session
+    session_data = join_session(sys.argv[1], sys.argv[2]) #player UUID and session id
+    session_id = session_data["id"]
+
+    #get playing player
+    player = player_from_session_with_uuid(session_data,sys.argv[1])
+    player_uuid = player["uuid"]
+
 else:
-    sys.exit("Bug in the matrix")
+    print "whaaaaaat?"
 
-# Get the other user email
-#invited_email = raw_input("Qui sera votre " + other_char_name + "? (email): ")
-invited_email = other_char_name+"@omts.fr"
-print "Qui sera votre " + other_char_name + "? (email): " + invited_email
 
-# Create a game session
-session_data = create_session(choosen_char_id, invited_email)
-player = player_from_session(session_data,choosen_char_id)
-player_uuid = player["uuid"]
 lastOriginId = 0
 
 while 1:
     selected_action_id, selected_type = display_state_and_actions_and_messages(player["state"], lastOriginId)
     lastOriginId = player["state"]["id"]
     session_updated = execute_action(selected_action_id, selected_type, player_uuid)
-    player = player_from_session(session_updated, choosen_char_id)
-    #si pas d'actions possibles, GAME OVER
-    #if not (player["state"]["actions"] and player["state"]["messages"]): #en python, liste vide est false
-    #    break
+    player = player_from_session_with_uuid(session_updated, player_uuid)
+
     if (player["state"]["won"]):
         print player["state"]["description"]
         print "YOU WIN !!"
