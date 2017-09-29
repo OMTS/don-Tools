@@ -47,6 +47,7 @@ def display_state_and_actions_and_messages(state, originId):
         print """
             ------
         """
+        print state["title"]
         print state["description"]
         print """
             ------
@@ -62,10 +63,10 @@ def display_state_and_actions_and_messages(state, originId):
     i = 1
 
     for action in actions:
-        print str(i) + " - " + action["title"]
+        print str(i) + " - " + action["title"] #+ " - id : " + str(action["id"])
         i = i+1
     for message in messages:
-        print str(i) + " - " + "SMS : " + message["title"]
+        print str(i) + " - " + "SMS : " + message["title"] #+ " - id : " + str(message["id"])
         i=i+1
 
     print """
@@ -86,8 +87,9 @@ def display_state_and_actions_and_messages(state, originId):
         return action_choosen_id, "action"
     else:
         message_choosen_feedback = "Vous envoyez un message"
+        message_choosen_content = messages[action_choosen_number - number_actions - 1]["content"]
         message_choosen_id = messages[action_choosen_number - number_actions - 1]["id"]
-        print message_choosen_feedback
+        print message_choosen_feedback + ":" + message_choosen_content
         print """
             ------
         """
@@ -154,5 +156,11 @@ while 1:
     #si pas d'actions possibles, GAME OVER
     #if not (player["state"]["actions"] and player["state"]["messages"]): #en python, liste vide est false
     #    break
-
-#print "GAME OVER"
+    if (player["state"]["won"]):
+        print player["state"]["description"]
+        print "YOU WIN !!"
+        break
+    if (player["state"]["gameOver"]):
+        print player["state"]["description"]
+        print "You LOSE !!"
+        break
