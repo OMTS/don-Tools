@@ -25,7 +25,7 @@ class RefreshManager(Thread):
         self.session_id = session_id
 
     def refresh_session(self):
-        execute_url = "https://don-production.herokuapp.com/api/sessions/"+str(self.session_id)
+        execute_url = "https://don-web-api-production.herokuapp.com/api/sessions/"+str(self.session_id)
         #r = requests.get(url = execute_url)
 
         #if r.status_code == 200:
@@ -48,7 +48,7 @@ class RefreshManager(Thread):
 
 # REST functions
 def get_histories():
-    histories_url = "https://don-production.herokuapp.com/api/histories"
+    histories_url = "https://don-web-api-production.herokuapp.com/api/histories"
     r = requests.get(url = histories_url)
     if r.status_code == 200:
         return r.json()
@@ -68,7 +68,7 @@ def player_from_session_with_uuid(session, uuid):
 
 def create_session(characterId, history_id):
     params = {"characterId": int(characterId), "historyId": int(history_id)}
-    session_url = "https://don-production.herokuapp.com/api/sessions"
+    session_url = "https://don-web-api-production.herokuapp.com/api/sessions"
     r = requests.post(url = session_url, json = params)
     if r.status_code == 200:
         return r.json()
@@ -78,7 +78,7 @@ def create_session(characterId, history_id):
 
 def join_session(uuid, session_id):
     params = {"uuid": str(uuid)}
-    join_session_url = "https://don-production.herokuapp.com/api/sessions/"+str(session_id)+"/join"
+    join_session_url = "https://don-web-api-production.herokuapp.com/api/sessions/"+str(session_id)+"/join"
 
     r = requests.post(url = join_session_url, json = params)
     if r.status_code == 200:
@@ -89,7 +89,7 @@ def join_session(uuid, session_id):
 
 def execute_action(action_id, action_type, player_uuid):
     params = {"type": str(action_type), "id": int(action_id)}
-    execute_url = "https://don-production.herokuapp.com/api/players/"+str(player_uuid)+"/execute"
+    execute_url = "https://don-web-api-production.herokuapp.com/api/players/"+str(player_uuid)+"/execute"
     r = requests.post(url = execute_url, json = params)
 
     if r.status_code == 200:
@@ -118,8 +118,8 @@ def display_state_and_actions_and_messages(state, originId):
         print """
             ------
         """
-        print style.BOLD + style.PURPLE + style.UNDERLINE + state["title"] + style.END
-        print style.ITALIC + state["description"] + style.END
+        print style.BOLD + style.PURPLE + style.UNDERLINE + state["title"].encode('utf-8') + style.END
+        print style.ITALIC + state["description"].encode('utf-8') + style.END
         print """
             ------
         """
@@ -134,10 +134,10 @@ def display_state_and_actions_and_messages(state, originId):
     i = 1
 
     for action in actions:
-        print style.BOLD + str(i) + " - " + action["title"] + style.END #+ " - id : " + str(action["id"])
+        print style.BOLD + str(i) + " - " + action["title"].encode('utf-8') + style.END #+ " - id : " + str(action["id"])
         i = i+1
     for message in messages:
-        print style.BOLD + str(i) + " - " + "SMS : " + message["title"] + style.END #+ " - id : " + str(message["id"])
+        print style.BOLD + str(i) + " - " + "SMS : " + message["title"].encode('utf-8') + style.END #+ " - id : " + str(message["id"])
         i=i+1
 
     print """
@@ -151,7 +151,7 @@ def display_state_and_actions_and_messages(state, originId):
     if action_choosen_number < number_actions + 1 :
         action_choosen_feedback = actions[action_choosen_number - 1]["feedback"]
         action_choosen_id = actions[action_choosen_number - 1]["id"]
-        print action_choosen_feedback
+        print action_choosen_feedback.encode('utf-8')
         print """
             ------
         """
@@ -160,7 +160,7 @@ def display_state_and_actions_and_messages(state, originId):
         message_choosen_feedback = "Vous envoyez un message"
         message_choosen_content = messages[action_choosen_number - number_actions - 1]["content"]
         message_choosen_id = messages[action_choosen_number - number_actions - 1]["id"]
-        print message_choosen_feedback + " : " + message_choosen_content
+        print message_choosen_feedback.encode('utf-8') + " : " + message_choosen_content.encode('utf-8')
         print """
             ------
         """
@@ -198,7 +198,7 @@ if len(sys.argv) < 3: #first player
     print style.DARKCYAN + "---- Quel joueur êtes vous ? " + style.END
 
     for char in available_chars:
-        print str(char["id"]) + " - " + str(char["name"])
+        print str(char["id"]) + " - " + str(char["name"]).encode('utf-8')
 
     choosen_char_id = int(raw_input("---- Numéro du joueur selectionné : "))
     #choosen_char_id = 1
@@ -208,7 +208,7 @@ if len(sys.argv) < 3: #first player
 
     other_char_name = ""
     if len(other_chars) > 0 and  len(choosen_chars) > 0:
-        print style.DARKCYAN + "---- Vous êtes " + str(choosen_chars[0]["name"]) + style.END
+        print style.DARKCYAN + "---- Vous êtes " + str(choosen_chars[0]["name"]).encode('utf-8') + style.END
         other_char_name = str(other_chars[0]["name"])
     else:
         sys.exit("Bug in the matrix")
@@ -225,9 +225,9 @@ if len(sys.argv) < 3: #first player
     other_player_uuid = other_player["uuid"]
 
     #prompt the command line for the other to play
-    print style.DARKCYAN + "---- L'autre joueur joura " + other_char_name + style.END
+    print style.DARKCYAN + "---- L'autre joueur joura " + other_char_name.encode('utf-8') + style.END
     print ""
-    print style.BOLD + ">>>>>> Démarrez l'autre joueur avec python play.py " + str(other_player_uuid) + " " + str(session_id) + " <<<<<<" + style.END
+    print style.BOLD + ">>>>>> Démarrez l'autre joueur avec python play.py " + str(other_player_uuid).encode('utf-8') + " " + str(session_id) + " <<<<<<" + style.END
 
 
 elif len(sys.argv) == 3: #second player
@@ -238,7 +238,7 @@ elif len(sys.argv) == 3: #second player
     #get playing player
     player = player_from_session_with_uuid(session_data,sys.argv[1])
     player_uuid = player["uuid"]
-    print "---- Vous êtes " + str(player["character"]["name"])
+    print "---- Vous êtes " + str(player["character"]["name"]).encode('utf-8')
 
 
 else:
@@ -258,10 +258,10 @@ while 1:
     player = player_from_session_with_uuid(session_updated, player_uuid)
 
     if (player["state"]["won"]):
-        print player["state"]["description"]
+        print player["state"]["description"].encode('utf-8')
         print style.BOLD + style.PURPLE + style.UNDERLINE + "YOU WIN !!" + style.END
         break
     if (player["state"]["gameOver"]):
-        print player["state"]["description"]
+        print player["state"]["description"].encode('utf-8')
         print style.BOLD + style.RED + style.UNDERLINE + "You LOSE !!" + style.END
         break
