@@ -1,0 +1,35 @@
+{
+  "history": "Toujours choisir les framboises",
+  "cases": {
+    "success-shortest-path": [
+      {"character": "Kate", "action": "run to the house"},
+      {"character": "Kate", "action": "Bourriner la porte"},
+      {"character": "Marc", "action": "Enlever le casque"},
+      {"character": "Marc", "action": "Aller à la porte"},
+      {"character": "Marc", "action": "Prendre le téléphone"},
+      {"character": "Marc", "action": "SMS - Parler de l'alim"},
+      {"character": "Kate", "action": "aller au bloc alim"},
+      {"character": "Kate", "action": "Couper l'alimentation"},
+      {"character": "Marc", "action": "Tourner la molette"},
+      {"character": "Kate", "action": "Retourner à la porte"},
+      {"character": "Kate", "action": "ouvrir la porte"}
+    ],
+    "death-1-idleness": [
+      {"character": "Kate", "action": "check vitals"},
+      {"character": "Kate", "action": "call emergency"},
+      {"character": "Kate", "action": "wait emergency"}
+    ],
+    "death-2-silliness": [
+      {"character": "Marc", "action": "Monter le volume"}
+    ],
+    "death-3-illness": [
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"},
+      {"character": "Marc", "action": "Se gratter là où ça démange"}
+    ]
+  }
+}
