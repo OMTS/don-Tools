@@ -16,6 +16,8 @@ class style:
    ITALIC = '\x1B[3m'
    END = '\033[0m'
 
+base_url = "https://don-web-api-production.herokuapp.com"
+
 class RefreshManager(Thread):
 
     """Thread chargé de mettre à jour la session et d'update l'UI"""
@@ -25,7 +27,7 @@ class RefreshManager(Thread):
         self.session_id = session_id
 
     def refresh_session(self):
-        execute_url = "https://don-web-api-production.herokuapp.com/api/sessions/"+str(self.session_id)
+        execute_url = base_url + "/api/sessions/" + str(self.session_id)
         #r = requests.get(url = execute_url)
 
         #if r.status_code == 200:
@@ -48,7 +50,7 @@ class RefreshManager(Thread):
 
 # REST functions
 def get_histories():
-    histories_url = "https://don-web-api-production.herokuapp.com/api/histories"
+    histories_url = base_url + "/api/histories"
     r = requests.get(url = histories_url)
     if r.status_code == 200:
         return r.json()
@@ -68,7 +70,7 @@ def player_from_session_with_uuid(session, uuid):
 
 def create_session(characterId, history_id):
     params = {"characterId": int(characterId), "historyId": int(history_id)}
-    session_url = "https://don-web-api-production.herokuapp.com/api/sessions"
+    session_url = base_url + "/api/sessions"
     r = requests.post(url = session_url, json = params)
     if r.status_code == 200:
         return r.json()
@@ -78,7 +80,7 @@ def create_session(characterId, history_id):
 
 def join_session(uuid, session_id):
     params = {"uuid": str(uuid)}
-    join_session_url = "https://don-web-api-production.herokuapp.com/api/sessions/"+str(session_id)+"/join"
+    join_session_url = base_url + "/api/sessions/"+str(session_id)+"/join"
 
     r = requests.post(url = join_session_url, json = params)
     if r.status_code == 200:
@@ -87,9 +89,11 @@ def join_session(uuid, session_id):
         print r.text
         sys.exit("POST /sessions/uuid/join response not parsed")
 
-def execute_action(action_id, action_type, player_uuid):
-    params = {"type": str(action_type), "id": int(action_id)}
-    execute_url = "https://don-web-api-production.herokuapp.com/api/players/"+str(player_uuid)+"/execute"
+def execute_action(action_id, action_type, player_id):
+    #params = {"type": str(action_type), "id": int(action_id)}
+    params = {"id": int(action_id)}
+    execute_url = base_url + "/api/players/"+str(player_id)+"/execute"
+
     r = requests.post(url = execute_url, json = params)
 
     if r.status_code == 200:
@@ -222,6 +226,7 @@ if len(sys.argv) < 3: #first player
     other_player = other_player_from_session_with_char_id(session_data, choosen_char_id)
 
     player_uuid = player["uuid"]
+    player_id = player["id"]
     other_player_uuid = other_player["uuid"]
 
     #prompt the command line for the other to play
@@ -238,6 +243,7 @@ elif len(sys.argv) == 3: #second player
     #get playing player
     player = player_from_session_with_uuid(session_data,sys.argv[1])
     player_uuid = player["uuid"]
+    player_id = player["id"]
     print "---- Vous êtes " + str(player["character"]["name"]).encode('utf-8')
 
 
@@ -254,14 +260,14 @@ current_state = player["state"]
 while 1:
     selected_action_id, selected_type = display_state_and_actions_and_messages(player["state"], lastOriginId)
     lastOriginId = player["state"]["id"]
-    session_updated = execute_action(selected_action_id, selected_type, player_uuid)
+    session_updated = execute_action(selected_action_id, selected_type, player_id)
     player = player_from_session_with_uuid(session_updated, player_uuid)
 
-    if (player["state"]["won"]):
+    if (player["state"]["win"]):
         print player["state"]["description"].encode('utf-8')
         print style.BOLD + style.PURPLE + style.UNDERLINE + "YOU WIN !!" + style.END
         break
-    if (player["state"]["gameOver"]):
+    if (player["state"]["loose"]):
         print player["state"]["description"].encode('utf-8')
         print style.BOLD + style.RED + style.UNDERLINE + "You LOSE !!" + style.END
         break
