@@ -18,36 +18,6 @@ class style:
 
 base_url = "https://don-web-api-production.herokuapp.com"
 
-class RefreshManager(Thread):
-
-    """Thread chargé de mettre à jour la session et d'update l'UI"""
-
-    def __init__(self, session_id):
-        Thread.__init__(self)
-        self.session_id = session_id
-
-    def refresh_session(self):
-        execute_url = base_url + "/api/sessions/" + str(self.session_id)
-        #r = requests.get(url = execute_url)
-
-        #if r.status_code == 200:
-        #    return r.json()
-        #else:
-        #    print r.text
-        #    sys.exit("POST /sessions response not parsed")
-
-
-    def run(self):
-        i = 0
-        while 1:
-            #sys.stdout.write(self.lettre)
-            sys.stdout.flush()
-            self.refresh_session()
-            #attente = 0.2
-            #attente += random.randint(1, 60) / 100
-            #time.sleep(attente)
-
-
 # REST functions
 def get_histories():
     histories_url = base_url + "/api/histories"
@@ -103,15 +73,15 @@ def execute_action(action_id, action_type, player_id):
         sys.exit("POST /sessions response not parsed")
 
 
-#def refresh_session(session_id):
-#    execute_url = "https://don-production.herokuapp.com/api/sessons/"+str(session_id)
-#    r = requests.get(url = execute_url)
+def refresh_session(session_id):
+    execute_url = base_url + "/api/sessions/"+str(session_id)
+    r = requests.get(url = execute_url)
 
-#    if r.status_code == 200:
-#        return r.json()
-#    else:
-#        print r.text
-#        sys.exit("POST /sessions response not parsed")
+    if r.status_code == 200:
+        return r.json()
+    else:
+        print r.text
+        sys.exit("GET /sessions/:id response not parsed")
 
 
 
@@ -133,24 +103,23 @@ def display_state_and_actions_and_messages(state, originId):
     #on indexe les actions possibles en local
     number_actions = len(actions)
 
+    print style.BOLD + "0 - DEBUG - Refresh Session" + style.END
+
     i = 1
-
-
     for action in actions:
         notificationType = action.get("notificationType", "")
         title  = "SMS - " + action["title"] if notificationType == "sms" else action["title"]
-
         print style.BOLD + str(i) + " - " + title.encode('utf-8') + style.END #+ " - id : " + str(action["id"])
         i = i + 1
     print """
         ------
     """
 
-#    action_choosen_id = int(raw_input("Votre choix : "))
-#    action_choosen_feedback = [x for x in actions if x["id"] == action_choosen_id][0]["feedback"]
     action_choosen_number = int(raw_input("Votre choix : "))
     #traitement des choix "action" et "message"
-    if action_choosen_number < number_actions + 1 :
+    if action_choosen_number == 0:
+        return -1, "refresh"
+    elif action_choosen_number < number_actions + 1 :
         notificationType = actions[action_choosen_number - 1].get("notificationType", "")
 
         action_choosen_feedback = actions[action_choosen_number - 1]["feedback"] if notificationType != "sms" else "Vous envoyez un message"
@@ -247,13 +216,15 @@ else:
 lastOriginId = 0
 
 current_state = player["state"]
-#refresh_manager = RefreshManager(session_id)
-#refresh_manager.start()
 
 while 1:
     selected_action_id, selected_type = display_state_and_actions_and_messages(player["state"], lastOriginId)
     lastOriginId = player["state"]["id"]
-    session_updated = execute_action(selected_action_id, selected_type, player_id)
+    if selected_action_id != -1 and selected_type != "refresh":
+        session_updated = execute_action(selected_action_id, selected_type, player_id)
+    else:
+        session_updated = refresh_session(session_id)
+
     player = player_from_session_with_uuid(session_updated, player_uuid)
 
     if (player["state"]["win"]):
